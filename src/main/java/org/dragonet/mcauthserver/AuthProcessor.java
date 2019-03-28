@@ -30,8 +30,8 @@ public class AuthProcessor extends ServerAdapter {
 
     private ExecutorService threads;
 
-    private Set<PlayerStatusInfo> playerCache = Collections.synchronizedSet(new HashSet<>());
-    private Thread cacheCleaner = new Thread(){
+    public static final Set<PlayerStatusInfo> playerCache = Collections.synchronizedSet(new HashSet<>());
+    private static final Thread cacheCleaner = new Thread(){
         @Override
         public void run() {
             try{
@@ -41,10 +41,13 @@ public class AuthProcessor extends ServerAdapter {
         }
     };
 
+    static {
+        cacheCleaner.start();
+    }
+
     public AuthProcessor(AuthServer server, int thread_count) {
         this.server = server;
         threads = Executors.newFixedThreadPool(thread_count);
-        cacheCleaner.start();
     }
 
     public void onPlayerLoggedIn(Session session){
@@ -53,24 +56,6 @@ public class AuthProcessor extends ServerAdapter {
         session.addListener(auth_session);
         auth_session.sendRequestForIP();
         server.getLogger().info(Lang.SERVER_PLAYER_JOINED.build(profile.getName(), session.getRemoteAddress().toString()));
-        boolean cached = playerCache.contains(profile.getName().toLowerCase());
-        if(cached) {
-            onPlayerStatusFetched(session, true);
-        } else {
-            SessionUtils.sendChat(session, Lang.PLAYER_LOADING.build());
-            Future f = threads.submit(new PlayerStatusChecker(session, profile, (r) -> onPlayerStatusFetched(session, r)));
-            session.setFlag(FLAG_CHECK_TASK_KEY, f);
-        }
-    }
-
-    public void onPlayerStatusFetched(Session session, boolean registered) {
-        if(registered) {
-            SessionUtils.sendChat(session, Lang.PLAYER_NOTIFY_REGISTERED.build());
-            session.setFlag(FLAG_LOGIN_KEY, true);
-        } else {
-            SessionUtils.sendChat(session, Lang.PLAYER_NOTIFY_NONREGISTERED.build());
-            session.setFlag(FLAG_LOGIN_KEY, false);
-        }
     }
 
     @Override
@@ -83,14 +68,8 @@ public class AuthProcessor extends ServerAdapter {
         server.getLogger().info(Lang.SERVER_PLAYER_DISCONNECT.build(profile.getName()));
     }
 
-    public void cleanCache() {
-        Iterator<PlayerStatusInfo> i = playerCache.iterator();
-        while(i.hasNext()) {
-            PlayerStatusInfo s = i.next();
-            if(s.timeDiff() > CACHE_INVALIDATE_TIME) {
-                i.remove();
-            }
-        }
+    public static void cleanCache() {
+        playerCache.removeIf(s -> s.timeDiff() > CACHE_INVALIDATE_TIME);
     }
 
     private void checkFlagAndCancelTask(Session session, String flag) {

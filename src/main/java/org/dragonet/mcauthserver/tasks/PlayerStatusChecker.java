@@ -5,10 +5,10 @@ import com.github.steveice10.packetlib.Session;
 import com.google.gson.JsonObject;
 import org.dragonet.mcauthserver.AuthProcessor;
 import org.dragonet.mcauthserver.AuthServer;
+import org.dragonet.mcauthserver.AuthSession;
 import org.dragonet.mcauthserver.utils.Lang;
 import org.dragonet.mcauthserver.utils.URUtils;
 
-import java.net.InetSocketAddress;
 import java.net.URLEncoder;
 
 /**
@@ -30,7 +30,7 @@ public class PlayerStatusChecker implements Runnable {
     public void run() {
         try {
             JsonObject result = URUtils.request("/account/checkRegistered",
-                    "username=" + URLEncoder.encode(player.getName(), "UTF-8") + "&" + "client_ip=" + URLEncoder.encode(((InetSocketAddress)session.getRemoteAddress()).getHostString(), "UTF-8")
+                    "username=" + URLEncoder.encode(player.getName(), "UTF-8") + "&" + "client_ip=" + URLEncoder.encode(session.getFlag(AuthSession.FLAG_REAL_IP_ADDRESS), "UTF-8")
             );
             if(result == null) {
                 throw new RuntimeException(Lang.SERVER_API_FAILED.build());

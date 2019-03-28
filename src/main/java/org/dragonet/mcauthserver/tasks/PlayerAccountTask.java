@@ -5,13 +5,12 @@ import com.github.steveice10.mc.protocol.MinecraftConstants;
 import com.github.steveice10.packetlib.Session;
 import com.google.gson.JsonObject;
 import org.dragonet.mcauthserver.AuthProcessor;
+import org.dragonet.mcauthserver.AuthSession;
 import org.dragonet.mcauthserver.utils.Lang;
 import org.dragonet.mcauthserver.utils.SessionUtils;
 import org.dragonet.mcauthserver.utils.URUtils;
 
-import java.net.InetSocketAddress;
 import java.net.URLEncoder;
-import java.util.UUID;
 
 /**
  * Created on 2017/9/26.
@@ -37,7 +36,7 @@ public class PlayerAccountTask implements Runnable {
             String ep = "/account/" + (register ? "register" : "checkLogin");
             String args = "username=" + URLEncoder.encode(profile.getName(), "UTF-8")
                     + "&password=" + URLEncoder.encode(password, "UTF-8")
-                    + "&client_ip=" + URLEncoder.encode(((InetSocketAddress)session.getRemoteAddress()).getHostString(), "UTF-8");
+                    + "&client_ip=" + URLEncoder.encode(session.getFlag(AuthSession.FLAG_REAL_IP_ADDRESS), "UTF-8");
             if(register) {
                 args += "&uuid=" + URLEncoder.encode(SessionUtils.getUUID(profile).toString(), "UTF-8");
             }

@@ -9,6 +9,7 @@ import com.github.steveice10.packetlib.Session;
 import com.github.steveice10.packetlib.event.session.PacketReceivedEvent;
 import com.github.steveice10.packetlib.event.session.SessionAdapter;
 import org.dragonet.mcauthserver.tasks.PlayerAccountTask;
+import org.dragonet.mcauthserver.tasks.PlayerStatusChecker;
 import org.dragonet.mcauthserver.utils.Lang;
 import org.dragonet.mcauthserver.utils.SessionUtils;
 
@@ -66,6 +67,15 @@ public class AuthSession extends SessionAdapter {
                         session.setFlag(FLAG_REAL_IP_ADDRESS, ip);
                         GameProfile profile = session.getFlag(MinecraftConstants.PROFILE_KEY);
                         AuthServer.instance.getLogger().info(Lang.SERVER_PLAYER_IP.build(profile.getName(), ip));
+
+                        boolean cached = AuthProcessor.playerCache.contains(profile.getName().toLowerCase());
+                        if(cached) {
+                            onPlayerStatusFetched(session, true);
+                        } else {
+                            SessionUtils.sendChat(session, Lang.PLAYER_LOADING.build());
+                            Future f = AuthServer.instance.getProcessor().getThreads().submit(new PlayerStatusChecker(session, profile, (r) -> onPlayerStatusFetched(session, r)));
+                            session.setFlag(AuthProcessor.FLAG_CHECK_TASK_KEY, f);
+                        }
                     }
                 }
                 if(pm.getChannel().equals("UltimateRoles")) {
@@ -85,6 +95,16 @@ public class AuthSession extends SessionAdapter {
         if(ClientChatPacket.class.isAssignableFrom(event.getPacket().getClass())) {
             ClientChatPacket chat = event.getPacket();
             onChat(chat.getMessage());
+        }
+    }
+
+    private void onPlayerStatusFetched(Session session, boolean registered) {
+        if(registered) {
+            SessionUtils.sendChat(session, Lang.PLAYER_NOTIFY_REGISTERED.build());
+            session.setFlag(AuthProcessor.FLAG_LOGIN_KEY, true);
+        } else {
+            SessionUtils.sendChat(session, Lang.PLAYER_NOTIFY_NONREGISTERED.build());
+            session.setFlag(AuthProcessor.FLAG_LOGIN_KEY, false);
         }
     }
 
