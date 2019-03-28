@@ -31,6 +31,7 @@ public enum Lang {
     PLAYER_LOGGING_IN,
     PLAYER_FAILED,
     PLAYER_SUCCESS,
+    PLAYER_NOTICE_COMMAND
     ;
 
 

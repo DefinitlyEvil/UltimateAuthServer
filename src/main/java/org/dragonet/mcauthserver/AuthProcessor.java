@@ -76,18 +76,8 @@ public class AuthProcessor extends ServerAdapter {
         Session session = event.getSession();
         GameProfile profile = session.getFlag(MinecraftConstants.PROFILE_KEY);
         // clear up stuffs
-        if(session.hasFlag(FLAG_CHECK_TASK_KEY)) {
-            Future f = session.getFlag(FLAG_CHECK_TASK_KEY);
-            if(f != null && f.isDone() && !f.isCancelled()) {
-                f.cancel(true);
-            }
-        }
-        if(session.hasFlag(FLAG_ACCOUNT_TASK_KEY)) {
-            Future f = session.getFlag(FLAG_ACCOUNT_TASK_KEY);
-            if(f != null && f.isDone() && !f.isCancelled()) {
-                f.cancel(true);
-            }
-        }
+        checkFlagAndCancelTask(session, FLAG_CHECK_TASK_KEY);
+        checkFlagAndCancelTask(session, FLAG_ACCOUNT_TASK_KEY);
         server.getLogger().info(Lang.SERVER_PLAYER_DISCONNECT.build(profile.getName()));
     }
 
@@ -97,6 +87,15 @@ public class AuthProcessor extends ServerAdapter {
             PlayerStatusInfo s = i.next();
             if(s.timeDiff() > CACHE_INVALIDATE_TIME) {
                 i.remove();
+            }
+        }
+    }
+
+    private void checkFlagAndCancelTask(Session session, String flag) {
+        if(session.hasFlag(flag)) {
+            Future f = session.getFlag(flag);
+            if(f != null && f.isDone() && !f.isCancelled()) {
+                f.cancel(true);
             }
         }
     }

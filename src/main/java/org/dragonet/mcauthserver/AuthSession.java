@@ -40,6 +40,13 @@ public class AuthSession extends SessionAdapter {
             SessionUtils.sendChat(session, Lang.PLAYER_STILL_LOADING.build());
             return;
         }
+
+        String lowered = message.toLowerCase();
+        if(lowered.startsWith("/register") || lowered.startsWith("/login") || lowered.startsWith("/reg ") || lowered.startsWith("/l ")) {
+            SessionUtils.sendChat(session, Lang.PLAYER_NOTICE_COMMAND.build());
+            return;
+        }
+
         boolean registered = session.getFlag(AuthProcessor.FLAG_LOGIN_KEY);
         if(!registered) {
             if(passwordCached == null) {
