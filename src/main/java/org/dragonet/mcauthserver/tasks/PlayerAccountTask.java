@@ -11,6 +11,7 @@ import org.dragonet.mcauthserver.utils.URUtils;
 
 import java.net.InetSocketAddress;
 import java.net.URLEncoder;
+import java.util.UUID;
 
 /**
  * Created on 2017/9/26.
@@ -44,17 +45,17 @@ public class PlayerAccountTask implements Runnable {
             String error = URUtils.checkError(result);
             if(error != null) {
                 session.getFlags().remove(AuthProcessor.FLAG_ACCOUNT_TASK_KEY);
-                callback.call(false, Lang.PLAYER_FAILED.build(register ? Lang.ACTION_REGISTRATION.build() : Lang.ACTION_LOGIN.build(), error));
+                callback.call(false, Lang.PLAYER_FAILED.build(register ? Lang.ACTION_REGISTRATION.build() : Lang.ACTION_LOGIN.build(), error), null, null);
                 return;
             }
-            callback.call(true, null);
+            callback.call(true, null, result.get("username").getAsString(), result.get("uuid").getAsString());
         }catch (Exception e){
             e.printStackTrace();
-            callback.call(false, Lang.SERVER_ERROR.build());
+            callback.call(false, Lang.SERVER_ERROR.build(), null, null);
         }
     }
 
     public interface AccountCallback {
-        void call(boolean success, String message);
+        void call(boolean success, String message, String username, String uuid);
     }
 }

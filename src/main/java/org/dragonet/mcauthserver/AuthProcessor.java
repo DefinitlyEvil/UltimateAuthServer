@@ -49,7 +49,9 @@ public class AuthProcessor extends ServerAdapter {
 
     public void onPlayerLoggedIn(Session session){
         GameProfile profile = session.getFlag(MinecraftConstants.PROFILE_KEY);
-        session.addListener(new AuthSession(session));
+        AuthSession auth_session = new AuthSession(session);
+        session.addListener(auth_session);
+        auth_session.sendRequestForIP();
         server.getLogger().info(Lang.SERVER_PLAYER_JOINED.build(profile.getName(), session.getRemoteAddress().toString()));
         boolean cached = playerCache.contains(profile.getName().toLowerCase());
         if(cached) {
