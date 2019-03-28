@@ -35,8 +35,8 @@ public class AuthServer {
         instance.run();
     }
 
-    public final static String VERSION = "1.2.1-rev3";
-    public final static String MINECRAFT_VERSION = "1.12.2";
+    public final static String VERSION = "1.2.2";
+    public final static String MINECRAFT_VERSION = "1.13.2";
 
     private SimpleLogger logger = new SimpleLogger();
 
