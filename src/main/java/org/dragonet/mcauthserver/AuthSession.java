@@ -40,9 +40,10 @@ public class AuthSession extends SessionAdapter {
             } else {
                 logged_in.set(true);
                 SessionUtils.sendChat(session, Lang.PLAYER_SUCCESS.build());
+                session.getFlags().remove(AuthProcessor.FLAG_ACCOUNT_TASK_KEY);
                 // update username and uuid to make it case friendly
                 // or one username with different cases can have many accounts!
-                sendBungeeCordMessage("UltimateRoles", c -> {
+                sendPluginMessage("UltimateRoles", c -> {
                     c.writeUTF("UpdateProfile");
                     c.writeUTF(username);
                     c.writeUTF(uuid);
@@ -136,34 +137,25 @@ public class AuthSession extends SessionAdapter {
     }
 
     private void sendPlayer() {
-        sendBungeeCordMessage("Connect", (dos) ->
-            dos.writeUTF(AuthServer.instance.getProperties().getProperty("lobby-server"))
-        );
+        sendPluginMessage("BungeeCord", c -> {
+            c.writeUTF("Connect");
+            c.writeUTF(AuthServer.instance.getProperties().getProperty("lobby-server"));
+        });
     }
 
     public void sendRequestForIP() {
-        sendBungeeCordMessage("IP");
+        sendPluginMessage("BungeeCord", c -> c.writeUTF("IP"));
     }
 
-    public void sendBungeeCordMessage(byte[] data) {
-        ServerPluginMessagePacket pluginMessage = new ServerPluginMessagePacket("BungeeCord", data);
-        session.getFlags().remove(AuthProcessor.FLAG_ACCOUNT_TASK_KEY);
-        session.send(pluginMessage);
-    }
-
-    public void sendBungeeCordMessage(String subchannel) {
-        sendBungeeCordMessage(subchannel, null);
-    }
-
-    public void sendBungeeCordMessage(String subchannel, PluginMessageConstructor constructor) {
+    public void sendPluginMessage(String channel, PluginMessageConstructor constructor) {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             DataOutputStream dos = new DataOutputStream(bos);
-            dos.writeUTF(subchannel);
-            if(constructor != null) constructor.construct(dos);
+            constructor.construct(dos);
             dos.close();
             byte[] payload = bos.toByteArray();
-            sendBungeeCordMessage(payload);
+            ServerPluginMessagePacket pluginMessage = new ServerPluginMessagePacket(channel, payload);
+            session.send(pluginMessage);
         }catch (Exception e){
             e.printStackTrace();
             session.disconnect(Lang.SERVER_ERROR.build());
